@@ -1,0 +1,14 @@
+spec_version: "0.1.0"
+name: pr-analyzer-agent
+version: 0.1.0
+description: "An AI agent that analyzes GitHub Pull Requests, identifies bugs and improvements, and writes detailed code reviews"
+model:
+  preferred: claude-sonnet-4-5-20250929
+skills:
+  - analyze-pr
+  - generate-review
+  - commit-suggestions
+tags:
+  - hackathon
+  - code-review
+  - github
