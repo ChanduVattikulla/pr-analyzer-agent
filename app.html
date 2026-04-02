@@ -63,7 +63,6 @@
             border: 2px solid #ddd;
             border-radius: 6px;
             font-size: 1em;
-            transition: border-color 0.3s;
         }
         .input-group input:focus {
             outline: none;
@@ -76,7 +75,6 @@
             font-size: 1em;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             width: 100%;
@@ -85,32 +83,9 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
         }
-        .results-section {
-            display: none;
-        }
-        .results-section.active {
-            display: block;
-        }
-        .review-box {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
-            margin-top: 20px;
-            max-height: 600px;
-            overflow-y: auto;
-        }
-        .review-box h3 {
-            color: #333;
-            margin-bottom: 15px;
-        }
-        .review-box pre {
-            background: white;
-            padding: 15px;
-            border-radius: 6px;
-            overflow-x: auto;
-            font-size: 0.9em;
-            line-height: 1.5;
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
         .instructions {
             background: #f0f4ff;
@@ -126,11 +101,17 @@
         .instructions p {
             color: #666;
             margin: 8px 0;
+            font-size: 0.95em;
         }
-        @media (max-width: 768px) {
-            .input-group {
-                grid-template-columns: 1fr;
-            }
+        .info-box {
+            background: #fffbea;
+            border-left: 4px solid #ffa500;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .info-box strong {
+            color: #ff8c00;
         }
     </style>
 </head>
@@ -138,16 +119,19 @@
     <div class="container">
         <div class="header">
             <h1>🤖 PR Analyzer Agent</h1>
-            <p>Instant GitHub Pull Request Analysis & Code Review</p>
+            <p>Analyze GitHub Pull Requests in Real-Time</p>
         </div>
 
         <div class="content">
+            <div class="info-box">
+                <strong>ℹ️ How to Use:</strong> Enter any GitHub repository owner, name, and PR number to analyze that PR in real-time.
+            </div>
+
             <div class="instructions">
-                <h3>📋 How to Use</h3>
-                <p>1. Enter the GitHub repository owner (e.g., nodejs)</p>
-                <p>2. Enter the repository name (e.g., node)</p>
-                <p>3. Enter the PR number (e.g., 50000)</p>
-                <p>4. Click "Analyze PR" and wait for the review</p>
+                <h3>📋 Instructions</h3>
+                <p><strong>Example:</strong> nodejs, node, 50000</p>
+                <p>This will analyze the nodejs/node repository PR #50000</p>
+                <p><strong>Note:</strong> Must be a public GitHub repository</p>
             </div>
 
             <div class="input-section">
@@ -165,31 +149,106 @@
                         <input type="number" id="pr" placeholder="e.g., 50000" value="50000">
                     </div>
                 </div>
-                <button class="btn" onclick="analyzePR()">Analyze PR</button>
+                <button class="btn" id="analyzeBtn" onclick="analyzePR()">Analyze PR</button>
             </div>
 
-            <div class="results-section" id="results">
-                <div class="review-box">
-                    <h3>📊 Analysis Results</h3>
-                    <pre id="reviewContent">Click "Analyze PR" to see results</pre>
+            <div id="loading" style="display: none; text-align: center; padding: 40px;">
+                <div style="font-size: 3em; margin-bottom: 20px;">⏳</div>
+                <p>Analyzing PR... Please wait (this may take 10-30 seconds)</p>
+            </div>
+
+            <div id="results" style="display: none;">
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea;">
+                    <h3 style="color: #333; margin-bottom: 15px;">📊 Analysis Results</h3>
+                    <pre id="reviewContent" style="background: white; padding: 15px; border-radius: 6px; overflow-x: auto; font-size: 0.9em; line-height: 1.5; max-height: 600px; overflow-y: auto;"></pre>
+                </div>
+            </div>
+
+            <div id="error" style="display: none;">
+                <div style="background: #fee; color: #c33; padding: 15px; border-radius: 6px; border-left: 4px solid #c33;">
+                    <strong>❌ Error:</strong> <span id="errorMsg"></span>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        function analyzePR() {
+        async function analyzePR() {
             const owner = document.getElementById('owner').value.trim();
             const repo = document.getElementById('repo').value.trim();
             const pr = document.getElementById('pr').value.trim();
 
             if (!owner || !repo || !pr) {
-                alert('Please fill in all fields');
+                showError('Please fill in all fields');
                 return;
             }
 
-            document.getElementById('reviewContent').textContent = `Demo mode: In production, this would show analysis for ${owner}/${repo} PR #${pr}. To use the real agent, run: node run-agent.js ${owner} ${repo} ${pr}`;
-            document.getElementById('results').classList.add('active');
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('analyzeBtn').disabled = true;
+
+            try {
+                // Call backend API if available, otherwise show demo
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ owner, repo, pr })
+                }).catch(() => null);
+
+                if (response && response.ok) {
+                    const data = await response.json();
+                    showResults(data.review);
+                } else {
+                    // Demo mode
+                    showResults(`## 🤖 Automated Code Review for ${owner}/${repo} PR #${pr}
+
+**Analysis Date:** ${new Date().toISOString()}
+
+### Summary
+This is a DEMO. In production, this would show:
+- Real PR analysis from GitHub API
+- Security vulnerability checks
+- Code quality issues
+- Performance problems
+- Best practice violations
+
+### To Use Locally:
+\`\`\`bash
+npm install
+node run-agent.js ${owner} ${repo} ${pr}
+\`\`\`
+
+### To Use via GitHub Actions:
+1. Fork this repo
+2. Create a PR in your fork
+3. Agent automatically analyzes it
+4. Results saved in Actions artifacts
+
+### Key Features:
+- ✅ Real GitHub API integration
+- ✅ 10+ security checks
+- ✅ Code quality analysis
+- ✅ Performance detection
+- ✅ Permanent Git audit trail
+- ✅ Zero API costs`);
+                }
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('analyzeBtn').disabled = false;
+            }
+        }
+
+        function showResults(content) {
+            document.getElementById('reviewContent').textContent = content;
+            document.getElementById('results').style.display = 'block';
+        }
+
+        function showError(msg) {
+            document.getElementById('errorMsg').textContent = msg;
+            document.getElementById('error').style.display = 'block';
         }
 
         document.getElementById('pr').addEventListener('keypress', (e) => {
