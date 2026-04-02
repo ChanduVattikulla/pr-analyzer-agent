@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PR Analyzer Agent - Web Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        .header p {
+            opacity: 0.9;
+        }
+        .content {
+            padding: 40px;
+        }
+        .input-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr 150px;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        .input-group input {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 100%;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        .results-section {
+            display: none;
+        }
+        .results-section.active {
+            display: block;
+        }
+        .review-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            margin-top: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .review-box h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .review-box pre {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        .instructions {
+            background: #f0f4ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+        .instructions h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .instructions p {
+            color: #666;
+            margin: 8px 0;
+        }
+        @media (max-width: 768px) {
+            .input-group {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 PR Analyzer Agent</h1>
+            <p>Instant GitHub Pull Request Analysis & Code Review</p>
+        </div>
+
+        <div class="content">
+            <div class="instructions">
+                <h3>📋 How to Use</h3>
+                <p>1. Enter the GitHub repository owner (e.g., nodejs)</p>
+                <p>2. Enter the repository name (e.g., node)</p>
+                <p>3. Enter the PR number (e.g., 50000)</p>
+                <p>4. Click "Analyze PR" and wait for the review</p>
+            </div>
+
+            <div class="input-section">
+                <div class="input-group">
+                    <div>
+                        <label for="owner">Repository Owner</label>
+                        <input type="text" id="owner" placeholder="e.g., nodejs" value="nodejs">
+                    </div>
+                    <div>
+                        <label for="repo">Repository Name</label>
+                        <input type="text" id="repo" placeholder="e.g., node" value="node">
+                    </div>
+                    <div>
+                        <label for="pr">PR Number</label>
+                        <input type="number" id="pr" placeholder="e.g., 50000" value="50000">
+                    </div>
+                </div>
+                <button class="btn" onclick="analyzePR()">Analyze PR</button>
+            </div>
+
+            <div class="results-section" id="results">
+                <div class="review-box">
+                    <h3>📊 Analysis Results</h3>
+                    <pre id="reviewContent">Click "Analyze PR" to see results</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function analyzePR() {
+            const owner = document.getElementById('owner').value.trim();
+            const repo = document.getElementById('repo').value.trim();
+            const pr = document.getElementById('pr').value.trim();
+
+            if (!owner || !repo || !pr) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            document.getElementById('reviewContent').textContent = `Demo mode: In production, this would show analysis for ${owner}/${repo} PR #${pr}. To use the real agent, run: node run-agent.js ${owner} ${repo} ${pr}`;
+            document.getElementById('results').classList.add('active');
+        }
+
+        document.getElementById('pr').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') analyzePR();
+        });
+    </script>
+</body>
+</html>
