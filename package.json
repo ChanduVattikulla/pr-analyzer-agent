@@ -5,8 +5,12 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" ^&^& exit 1"
-  },
+    "start": "node run-agent.js",
+    "test": "node test-agent.js",
+    "analyze": "node skills/analyze-pr/analyze-pr.js",
+    "review": "node skills/generate-review/generate-review.js",
+    "commit": "node skills/commit-suggestions/commit-suggestions.js"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
