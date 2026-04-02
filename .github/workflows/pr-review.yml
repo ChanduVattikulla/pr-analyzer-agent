@@ -3,6 +3,7 @@ name: PR Analyzer Agent
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+
 permissions: 
   contents: write
   pull-requests: write
@@ -15,6 +16,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      
+      - name: Setup Git config
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
       
       - name: Setup Node.js
         uses: actions/setup-node@v4
